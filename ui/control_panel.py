@@ -38,8 +38,11 @@ class ControlPanel(Frame):
         Button(self, text="Oval", width=8,
                command=self.pick_oval).grid(row=1, column=4)
 
-        self.btn_draw = Button(self, text="Mulai Gambar", width=12, bg="yellow", command=self.toggle_draw)
-        self.btn_draw.grid(row=1, column=5)
+        self.btn_point = Button(self, text="Titik", bg="yellow", command=self.toggle_point)
+        self.btn_point.grid(row=2, column=0, columnspan=2, pady=5, padx=2, sticky="we")
+
+        self.btn_line = Button(self, text="Garis", bg="yellow", command=self.toggle_line)
+        self.btn_line.grid(row=2, column=2, columnspan=2, pady=5, padx=2, sticky="we")
 
         self.nav = NavigationPanel(self, self.canvas)
         self.nav.grid(row=2, column=7, rowspan=5, padx=5, pady=15, sticky="nw")
@@ -152,22 +155,35 @@ class ControlPanel(Frame):
                fg="white",
                command=self.canvas.clear_canvas).grid(row=9, column=0, columnspan=3, pady=10)
 
-    def toggle_draw(self):
-        """Menghidupkan / Mematikan fitur kursor"""
-        self.canvas.is_drawing_mode = not getattr(self.canvas, 'is_drawing_mode', False)
-        
-        if self.canvas.is_drawing_mode:
-            self.btn_draw.config(text="Selesai", bg="lightgreen")
-            self.canvas.points = []
-            self.canvas.original_points = []
-            self.canvas.previous_points = []
-            self.canvas.reflection_mode = None
-            self.canvas.draw()
-            self.formula.update_formula("MODE GAMBAR AKTIF\nKlik kiri pada canvas untuk membuat titik sudut bangun.")
+    def toggle_point(self):
+        """Menghidupkan/Mematikan Mode Titik Tunggal"""
+        if getattr(self.canvas, 'drawing_mode', None) == "point":
+            self.canvas.drawing_mode = None
+            self.btn_point.config(text="Titik", bg="yellow")
+            self.formula.update_formula("Mode pembuat titik dinonaktifkan.\nTitik siap ditransformasi.")
         else:
-            self.btn_draw.config(text="Mulai Gambar", bg="yellow")
-            pesan = f"Selesai! {len(self.canvas.points)} titik berhasil dibuat.\nSekarang Anda dapat mengubahnya menggunakan transformasi."
-            self.formula.update_formula(pesan)
+            self.canvas.drawing_mode = "point"
+            self.btn_point.config(text="Selesai Titik", bg="lightgreen")
+            self.btn_line.config(text="Garis", bg="yellow") # Pastikan mode garis mati
+            
+            self.canvas.points = []
+            self.canvas.draw()
+            self.formula.update_formula("MODE TITIK AKTIF\n\nKlik kiri di atas canvas untuk menaruh 1 Titik.\nTitik akan berpindah-pindah jika Anda klik lagi.")
+
+    def toggle_line(self):
+        """Menghidupkan/Mematikan Mode Garis Lurus (Maks. 2 titik)"""
+        if getattr(self.canvas, 'drawing_mode', None) == "line":
+            self.canvas.drawing_mode = None
+            self.btn_line.config(text="Garis", bg="yellow")
+            self.formula.update_formula("Mode pembuat garis dinonaktifkan.\nGaris siap ditransformasi.")
+        else:
+            self.canvas.drawing_mode = "line"
+            self.btn_line.config(text="Selesai Garis", bg="lightgreen")
+            self.btn_point.config(text="Titik", bg="yellow") # Pastikan mode titik mati
+            
+            self.canvas.points = []
+            self.canvas.draw()
+            self.formula.update_formula("MODE GARIS AKTIF\n\nKlik kiri di atas canvas untuk menaruh 2 Titik.\nGaris Bresenham akan ditarik antara kedua titik tersebut.\nJika Anda klik titik ke-3, garis baru akan dibuat.")
 
     # ─── Shape Pickers (buat bangun + tampilkan rumus) ───
 
