@@ -97,6 +97,9 @@ class CanvasView(Frame):
             self.original_points = self.points[:]
             self.draw()
             
+            if hasattr(self, 'on_formula_update') and callable(self.on_formula_update):
+                self.on_formula_update(self.drawing_mode, self.points)
+            
         else:
             self.start_pan(event)
 

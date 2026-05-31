@@ -19,6 +19,7 @@ class ControlPanel(Frame):
         self.canvas = canvas
         self.formula = formula
         self.table = table
+        self.canvas.on_formula_update = self.handle_formula_update
 
         Label(self, text="PILIH BANGUN",
               font=("Arial", 9, "bold")).grid(row=0, column=0, columnspan=12)
@@ -184,6 +185,50 @@ class ControlPanel(Frame):
             self.canvas.points = []
             self.canvas.draw()
             self.formula.update_formula("MODE GARIS AKTIF\n\nKlik kiri di atas canvas untuk menaruh 2 Titik.\nGaris Bresenham akan ditarik antara kedua titik tersebut.\nJika Anda klik titik ke-3, garis baru akan dibuat.")
+
+    def handle_formula_update(self, mode, points):
+        if mode == "point" and len(points) == 1:
+            x, y = points[0]
+            rumus = f"""MEMBUAT BANGUN: TITIK
+
+Rumus:
+  Titik didefinisikan secara langsung
+  pada koordinat Kartesius (x, y).
+
+Titik:
+  ({round(x, 2)}, {round(y, 2)})
+"""
+            self.formula.update_formula(rumus)
+        elif mode == "line" and len(points) == 2:
+            x1, y1 = points[0]
+            x2, y2 = points[1]
+            
+            try:
+                m = (y2 - y1) / (x2 - x1)
+                c = y1 - m * x1
+                persamaan = f"y = {round(m, 2)}x + {round(c, 2)}"
+            except ZeroDivisionError:
+                persamaan = f"x = {round(x1, 2)} (Garis Vertikal)"
+
+            rumus = f"""MEMBUAT BANGUN: GARIS BRESENHAM
+
+Persamaan Garis (y = mx + c):
+  {persamaan}
+
+Algoritma Bresenham:
+  1. dx = |x2 - x1|, dy = |y2 - y1|
+  2. sx, sy = arah step (1 atau -1)
+  3. err = dx - dy
+  4. Loop dari (x1, y1) hingga (x2, y2):
+     a. Gambar pixel di (x, y)
+     b. e2 = 2 * err
+     c. Jika e2 > -dy, err -= dy, x += sx
+     d. Jika e2 < dx, err += dx, y += sy
+
+Titik 1: ({round(x1, 2)}, {round(y1, 2)})
+Titik 2: ({round(x2, 2)}, {round(y2, 2)})
+"""
+            self.formula.update_formula(rumus)
 
     # ─── Shape Pickers (buat bangun + tampilkan rumus) ───
 
