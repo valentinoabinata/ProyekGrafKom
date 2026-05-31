@@ -1,4 +1,3 @@
-
 from tkinter import *
 from tkinter.colorchooser import askcolor
 from math import pi
@@ -38,6 +37,9 @@ class ControlPanel(Frame):
 
         Button(self, text="Oval", width=8,
                command=self.pick_oval).grid(row=1, column=4)
+
+        self.btn_draw = Button(self, text="Mulai Gambar", width=12, bg="yellow", command=self.toggle_draw)
+        self.btn_draw.grid(row=1, column=5)
 
         self.nav = NavigationPanel(self, self.canvas)
         self.nav.grid(row=2, column=7, rowspan=5, padx=5, pady=15, sticky="nw")
@@ -149,6 +151,23 @@ class ControlPanel(Frame):
                bg="tomato",
                fg="white",
                command=self.canvas.clear_canvas).grid(row=9, column=0, columnspan=3, pady=10)
+
+    def toggle_draw(self):
+        """Menghidupkan / Mematikan fitur kursor"""
+        self.canvas.is_drawing_mode = not getattr(self.canvas, 'is_drawing_mode', False)
+        
+        if self.canvas.is_drawing_mode:
+            self.btn_draw.config(text="Selesai", bg="lightgreen")
+            self.canvas.points = []
+            self.canvas.original_points = []
+            self.canvas.previous_points = []
+            self.canvas.reflection_mode = None
+            self.canvas.draw()
+            self.formula.update_formula("MODE GAMBAR AKTIF\nKlik kiri pada canvas untuk membuat titik sudut bangun.")
+        else:
+            self.btn_draw.config(text="Mulai Gambar", bg="yellow")
+            pesan = f"Selesai! {len(self.canvas.points)} titik berhasil dibuat.\nSekarang Anda dapat mengubahnya menggunakan transformasi."
+            self.formula.update_formula(pesan)
 
     # ─── Shape Pickers (buat bangun + tampilkan rumus) ───
 
@@ -313,27 +332,6 @@ Rumus intersection:
 
         if color:
             self.canvas.set_colors(self.canvas.fill_color, color)
-
-            rumus = f"""OUTLINE COLOR (Garis Tepi)
-
-Warna outline: {color}
-
-Algoritma Pembentuk Garis (Bresenham):
-  Digunakan untuk menggambar garis antar titik 
-  (outline) pada layar berbasis pixel.
-
-  1. Hitung Δx = x2 - x1 dan Δy = y2 - y1
-  2. Hitung parameter keputusan awal:
-     p₀ = 2Δy - Δx
-  3. Untuk setiap x dari x1 ke x2:
-     Jika p < 0:
-       - Titik selanjutnya: (x+1, y)
-       - p baru = p + 2Δy
-     Jika p ≥ 0:
-       - Titik selanjutnya: (x+1, y+1)
-       - p baru = p + 2Δy - 2Δx
-"""
-            self.formula.update_formula(rumus)
 
     def parse_rotation_input(self, value):
         value = value.strip().lower()
@@ -606,37 +604,12 @@ Hasil:
         text = ""
 
         for (x, y), (xr, yr) in zip(before, after):
-            
-            rumus_x = ""
-            rumus_y = ""
-            
-            if mode == "x":
-                rumus_x = f"x' = x = {x}"
-                rumus_y = f"y' = -y = -({y}) = {yr}"
-            elif mode == "y":
-                rumus_x = f"x' = -x = -({x}) = {xr}"
-                rumus_y = f"y' = y = {y}"
-            elif mode == "origin":
-                rumus_x = f"x' = -x = -({x}) = {xr}"
-                rumus_y = f"y' = -y = -({y}) = {yr}"
-            elif mode == "yx":
-                rumus_x = f"x' = y = {y}"
-                rumus_y = f"y' = x = {x}"
-            elif mode == "y-x":
-                rumus_x = f"x' = -y = -({y}) = {xr}"
-                rumus_y = f"y' = -x = -({x}) = {yr}"
-            else:
-                rumus_x = f"x' = {x}"
-                rumus_y = f"y' = {y}"
 
             text += f"""
 Titik ({x},{y})
 
-Mode refleksi: {mode}
-
-Rumus:
-{rumus_x}
-{rumus_y}
+Mode refleksi:
+{mode}
 
 Hasil:
 ({x},{y}) -> ({xr},{yr})
@@ -672,4 +645,3 @@ Hasil:
 """
 
         return text
-
