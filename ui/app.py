@@ -4,60 +4,49 @@ from ui.canvas_view import CanvasView
 from ui.control_panel import ControlPanel
 from ui.formula_panel import FormulaPanel
 from ui.coordinate_table import CoordinateTable
-from ui.navigation_panel import NavigationPanel
 
 class GrafikaApp:
-    def __init__(self,root):
+
+    def __init__(self, root):
+
         root.title("Project Akhir Grafika Komputer")
         root.geometry("1850x980")
 
-        top = Frame(root)
-        top.pack(fill="x", pady=5)
+        main_paned = PanedWindow(
+            root,
+            orient=HORIZONTAL,
+            sashrelief=RAISED,
+            sashwidth=8
+        )
 
-        toolbar = Frame(root)
-        toolbar.pack(fill="x")
+        main_paned.pack(fill=BOTH, expand=True)
 
-        main_frame = Frame(root)
-        main_frame.pack(fill="both", expand=True)
+        left_panel = Frame(main_paned)
+        right_panel = Frame(main_paned)
 
-        left_frame = Frame(main_frame)
-        left_frame.pack(side="left", fill="both", expand=True)
+        main_paned.add(left_panel, minsize=350)
+        main_paned.add(right_panel, minsize=600)
 
-        right_frame = Frame(main_frame, width=350)
-        right_frame.pack(side="right", fill="y", padx=10)
+        top_controls = Frame(left_panel)
+        top_controls.pack(fill=X)
 
-        self.canvas = CanvasView(left_frame)
-        self.canvas.pack(padx=10, pady=10)
+        bottom_formula = Frame(left_panel)
+        bottom_formula.pack(fill=BOTH, expand=True)
 
-        self.formula = FormulaPanel(right_frame)
-        self.formula.pack(fill="both", expand=True, pady=10)
+        self.formula = FormulaPanel(bottom_formula)
+        self.formula.pack(fill=BOTH, expand=True, padx=5, pady=5)
 
-        Button(
-            toolbar,
-            text="Tampilkan Navigasi",
-            bg="lightblue",
-            command=self.show_navigation
-        ).pack(side="right", padx=10)
+        self.canvas = CanvasView(right_panel)
+        self.canvas.pack(fill=BOTH, expand=True)
 
-        bottom = Frame(root)
-        bottom.pack(fill="x")
-
-        self.table = CoordinateTable(bottom)
-        self.table.pack(fill="x")
+        self.table = CoordinateTable(root)
+        self.table.pack(fill=X, side=BOTTOM)
 
         self.controls = ControlPanel(
-            top,
+            top_controls,
             self.canvas,
             self.formula,
             self.table
         )
-        self.controls.pack(fill="x", padx=10)
 
-        self.nav_window = None
-
-    def show_navigation(self):
-        if self.nav_window is None or not self.nav_window.winfo_exists():
-            self.nav_window = NavigationPanel(
-                self.canvas.master,
-                self.canvas
-            )
+        self.controls.pack(fill=BOTH, expand=True, padx=5, pady=5)

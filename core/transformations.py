@@ -28,3 +28,12 @@ def reflect_point(x, y, mode):
 
 def shear_point(x, y, shx, shy):
     return x + shx * y, y + shy * x
+
+
+def reflect_point_custom(x, y, a, b, c):
+    d = (a * x + b * y + c) / (a*a + b*b)
+
+    xr = x - 2 * a * d
+    yr = y - 2 * b * d
+
+    return round(xr, 2), round(yr, 2)
