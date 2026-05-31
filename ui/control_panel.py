@@ -314,6 +314,27 @@ Rumus intersection:
         if color:
             self.canvas.set_colors(self.canvas.fill_color, color)
 
+            rumus = f"""OUTLINE COLOR (Garis Tepi)
+
+Warna outline: {color}
+
+Algoritma Pembentuk Garis (Bresenham):
+  Digunakan untuk menggambar garis antar titik 
+  (outline) pada layar berbasis pixel.
+
+  1. Hitung Δx = x2 - x1 dan Δy = y2 - y1
+  2. Hitung parameter keputusan awal:
+     p₀ = 2Δy - Δx
+  3. Untuk setiap x dari x1 ke x2:
+     Jika p < 0:
+       - Titik selanjutnya: (x+1, y)
+       - p baru = p + 2Δy
+     Jika p ≥ 0:
+       - Titik selanjutnya: (x+1, y+1)
+       - p baru = p + 2Δy - 2Δx
+"""
+            self.formula.update_formula(rumus)
+
     def parse_rotation_input(self, value):
         value = value.strip().lower()
 
@@ -585,12 +606,37 @@ Hasil:
         text = ""
 
         for (x, y), (xr, yr) in zip(before, after):
+            
+            rumus_x = ""
+            rumus_y = ""
+            
+            if mode == "x":
+                rumus_x = f"x' = x = {x}"
+                rumus_y = f"y' = -y = -({y}) = {yr}"
+            elif mode == "y":
+                rumus_x = f"x' = -x = -({x}) = {xr}"
+                rumus_y = f"y' = y = {y}"
+            elif mode == "origin":
+                rumus_x = f"x' = -x = -({x}) = {xr}"
+                rumus_y = f"y' = -y = -({y}) = {yr}"
+            elif mode == "yx":
+                rumus_x = f"x' = y = {y}"
+                rumus_y = f"y' = x = {x}"
+            elif mode == "y-x":
+                rumus_x = f"x' = -y = -({y}) = {xr}"
+                rumus_y = f"y' = -x = -({x}) = {yr}"
+            else:
+                rumus_x = f"x' = {x}"
+                rumus_y = f"y' = {y}"
 
             text += f"""
 Titik ({x},{y})
 
-Mode refleksi:
-{mode}
+Mode refleksi: {mode}
+
+Rumus:
+{rumus_x}
+{rumus_y}
 
 Hasil:
 ({x},{y}) -> ({xr},{yr})
