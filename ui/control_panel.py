@@ -25,19 +25,19 @@ class ControlPanel(Frame):
               font=("Arial", 9, "bold")).grid(row=0, column=0, columnspan=12)
 
         Button(self, text="Persegi", width=8,
-               command=lambda: self.canvas.set_shape(create_square())).grid(row=1, column=0)
+               command=self.pick_square).grid(row=1, column=0)
 
         Button(self, text="Panjang", width=8,
-               command=lambda: self.canvas.set_shape(create_rectangle())).grid(row=1, column=1)
+               command=self.pick_rectangle).grid(row=1, column=1)
 
         Button(self, text="Segitiga", width=8,
-               command=lambda: self.canvas.set_shape(create_triangle())).grid(row=1, column=2)
+               command=self.pick_triangle).grid(row=1, column=2)
 
         Button(self, text="Lingkaran", width=8,
-               command=lambda: self.canvas.set_shape(create_circle())).grid(row=1, column=3)
+               command=self.pick_circle).grid(row=1, column=3)
 
         Button(self, text="Oval", width=8,
-               command=lambda: self.canvas.set_shape(create_oval())).grid(row=1, column=4)
+               command=self.pick_oval).grid(row=1, column=4)
 
         self.nav = NavigationPanel(self, self.canvas)
         self.nav.grid(row=2, column=7, rowspan=5, padx=5, pady=15, sticky="nw")
@@ -149,6 +149,122 @@ class ControlPanel(Frame):
                bg="tomato",
                fg="white",
                command=self.canvas.clear_canvas).grid(row=9, column=0, columnspan=3, pady=10)
+
+    # ─── Shape Pickers (buat bangun + tampilkan rumus) ───
+
+    def _format_points(self, points):
+        return "\n".join(f"  ({x}, {y})" for x, y in points)
+
+    def pick_square(self):
+        pts = create_square()
+        self.canvas.set_shape(pts)
+
+        rumus = f"""MEMBUAT BANGUN: PERSEGI
+
+Rumus:
+  Titik didefinisikan secara langsung
+  sebagai 4 vertex persegi.
+
+  points = [(-2,-2), (2,-2), (2,2), (-2,2)]
+
+Sisi = 4 satuan
+
+Titik-titik yang dihasilkan:
+{self._format_points(pts)}
+"""
+        self.formula.update_formula(rumus)
+
+    def pick_rectangle(self):
+        pts = create_rectangle()
+        self.canvas.set_shape(pts)
+
+        rumus = f"""MEMBUAT BANGUN: PERSEGI PANJANG
+
+Rumus:
+  Titik didefinisikan secara langsung
+  sebagai 4 vertex persegi panjang.
+
+  points = [(-4,-2), (4,-2), (4,2), (-4,2)]
+
+Panjang = 8 satuan
+Lebar   = 4 satuan
+
+Titik-titik yang dihasilkan:
+{self._format_points(pts)}
+"""
+        self.formula.update_formula(rumus)
+
+    def pick_triangle(self):
+        pts = create_triangle()
+        self.canvas.set_shape(pts)
+
+        rumus = f"""MEMBUAT BANGUN: SEGITIGA
+
+Rumus:
+  Titik didefinisikan secara langsung
+  sebagai 3 vertex segitiga.
+
+  points = [(0,4), (-3,-3), (3,-3)]
+
+Titik-titik yang dihasilkan:
+{self._format_points(pts)}
+"""
+        self.formula.update_formula(rumus)
+
+    def pick_circle(self):
+        pts = create_circle()
+        self.canvas.set_shape(pts)
+
+        rumus = f"""MEMBUAT BANGUN: LINGKARAN
+
+Rumus (persamaan parametrik):
+  x = r × cos(θ)
+  y = r × sin(θ)
+
+Parameter:
+  r = 3
+  θ = 0°, 10°, 20°, ..., 350°
+
+Jumlah titik: {len(pts)}
+
+Kode:
+  for θ in range(0, 360, 10):
+      rad = radians(θ)
+      x = 3 × cos(rad)
+      y = 3 × sin(rad)
+
+Titik-titik yang dihasilkan:
+{self._format_points(pts)}
+"""
+        self.formula.update_formula(rumus)
+
+    def pick_oval(self):
+        pts = create_oval()
+        self.canvas.set_shape(pts)
+
+        rumus = f"""MEMBUAT BANGUN: OVAL / ELIPS
+
+Rumus (persamaan parametrik):
+  x = a × cos(θ)
+  y = b × sin(θ)
+
+Parameter:
+  a = 5  (semi-major axis)
+  b = 2  (semi-minor axis)
+  θ = 0°, 10°, 20°, ..., 350°
+
+Jumlah titik: {len(pts)}
+
+Kode:
+  for θ in range(0, 360, 10):
+      rad = radians(θ)
+      x = 5 × cos(rad)
+      y = 2 × sin(rad)
+
+Titik-titik yang dihasilkan:
+{self._format_points(pts)}
+"""
+        self.formula.update_formula(rumus)
 
     def get_value(self, entry, default=0):
         value = entry.get().strip()
