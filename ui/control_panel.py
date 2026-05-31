@@ -1,4 +1,3 @@
-
 from tkinter import *
 from tkinter.colorchooser import askcolor
 from math import pi
@@ -20,6 +19,7 @@ class ControlPanel(Frame):
         self.canvas = canvas
         self.formula = formula
         self.table = table
+        self.canvas.on_formula_update = self.handle_formula_update
 
         Label(self, text="PILIH BANGUN",
               font=("Arial", 9, "bold")).grid(row=0, column=0, columnspan=12)
@@ -38,6 +38,12 @@ class ControlPanel(Frame):
 
         Button(self, text="Oval", width=8,
                command=self.pick_oval).grid(row=1, column=4)
+
+        self.btn_point = Button(self, text="Titik", bg="yellow", command=self.toggle_point)
+        self.btn_point.grid(row=2, column=0, columnspan=2, pady=5, padx=2, sticky="we")
+
+        self.btn_line = Button(self, text="Garis", bg="yellow", command=self.toggle_line)
+        self.btn_line.grid(row=2, column=2, columnspan=2, pady=5, padx=2, sticky="we")
 
         self.nav = NavigationPanel(self, self.canvas)
         self.nav.grid(row=2, column=7, rowspan=5, padx=5, pady=15, sticky="nw")
@@ -149,6 +155,80 @@ class ControlPanel(Frame):
                bg="tomato",
                fg="white",
                command=self.canvas.clear_canvas).grid(row=9, column=0, columnspan=3, pady=10)
+
+    def toggle_point(self):
+        """Menghidupkan/Mematikan Mode Titik Tunggal"""
+        if getattr(self.canvas, 'drawing_mode', None) == "point":
+            self.canvas.drawing_mode = None
+            self.btn_point.config(text="Titik", bg="yellow")
+            self.formula.update_formula("Mode pembuat titik dinonaktifkan.\nTitik siap ditransformasi.")
+        else:
+            self.canvas.drawing_mode = "point"
+            self.btn_point.config(text="Selesai Titik", bg="lightgreen")
+            self.btn_line.config(text="Garis", bg="yellow") # Pastikan mode garis mati
+            
+            self.canvas.points = []
+            self.canvas.draw()
+            self.formula.update_formula("MODE TITIK AKTIF\n\nKlik kiri di atas canvas untuk menaruh 1 Titik.\nTitik akan berpindah-pindah jika Anda klik lagi.")
+
+    def toggle_line(self):
+        """Menghidupkan/Mematikan Mode Garis Lurus (Maks. 2 titik)"""
+        if getattr(self.canvas, 'drawing_mode', None) == "line":
+            self.canvas.drawing_mode = None
+            self.btn_line.config(text="Garis", bg="yellow")
+            self.formula.update_formula("Mode pembuat garis dinonaktifkan.\nGaris siap ditransformasi.")
+        else:
+            self.canvas.drawing_mode = "line"
+            self.btn_line.config(text="Selesai Garis", bg="lightgreen")
+            self.btn_point.config(text="Titik", bg="yellow") # Pastikan mode titik mati
+            
+            self.canvas.points = []
+            self.canvas.draw()
+            self.formula.update_formula("MODE GARIS AKTIF\n\nKlik kiri di atas canvas untuk menaruh 2 Titik.\nGaris Bresenham akan ditarik antara kedua titik tersebut.\nJika Anda klik titik ke-3, garis baru akan dibuat.")
+
+    def handle_formula_update(self, mode, points):
+        if mode == "point" and len(points) == 1:
+            x, y = points[0]
+            rumus = f"""MEMBUAT BANGUN: TITIK
+
+Rumus:
+  Titik didefinisikan secara langsung
+  pada koordinat Kartesius (x, y).
+
+Titik:
+  ({round(x, 2)}, {round(y, 2)})
+"""
+            self.formula.update_formula(rumus)
+        elif mode == "line" and len(points) == 2:
+            x1, y1 = points[0]
+            x2, y2 = points[1]
+            
+            try:
+                m = (y2 - y1) / (x2 - x1)
+                c = y1 - m * x1
+                persamaan = f"y = {round(m, 2)}x + {round(c, 2)}"
+            except ZeroDivisionError:
+                persamaan = f"x = {round(x1, 2)} (Garis Vertikal)"
+
+            rumus = f"""MEMBUAT BANGUN: GARIS BRESENHAM
+
+Persamaan Garis (y = mx + c):
+  {persamaan}
+
+Algoritma Bresenham:
+  1. dx = |x2 - x1|, dy = |y2 - y1|
+  2. sx, sy = arah step (1 atau -1)
+  3. err = dx - dy
+  4. Loop dari (x1, y1) hingga (x2, y2):
+     a. Gambar pixel di (x, y)
+     b. e2 = 2 * err
+     c. Jika e2 > -dy, err -= dy, x += sx
+     d. Jika e2 < dx, err += dx, y += sy
+
+Titik 1: ({round(x1, 2)}, {round(y1, 2)})
+Titik 2: ({round(x2, 2)}, {round(y2, 2)})
+"""
+            self.formula.update_formula(rumus)
 
     # ─── Shape Pickers (buat bangun + tampilkan rumus) ───
 
@@ -313,27 +393,6 @@ Rumus intersection:
 
         if color:
             self.canvas.set_colors(self.canvas.fill_color, color)
-
-            rumus = f"""OUTLINE COLOR (Garis Tepi)
-
-Warna outline: {color}
-
-Algoritma Pembentuk Garis (Bresenham):
-  Digunakan untuk menggambar garis antar titik 
-  (outline) pada layar berbasis pixel.
-
-  1. Hitung Δx = x2 - x1 dan Δy = y2 - y1
-  2. Hitung parameter keputusan awal:
-     p₀ = 2Δy - Δx
-  3. Untuk setiap x dari x1 ke x2:
-     Jika p < 0:
-       - Titik selanjutnya: (x+1, y)
-       - p baru = p + 2Δy
-     Jika p ≥ 0:
-       - Titik selanjutnya: (x+1, y+1)
-       - p baru = p + 2Δy - 2Δx
-"""
-            self.formula.update_formula(rumus)
 
     def parse_rotation_input(self, value):
         value = value.strip().lower()
@@ -606,37 +665,12 @@ Hasil:
         text = ""
 
         for (x, y), (xr, yr) in zip(before, after):
-            
-            rumus_x = ""
-            rumus_y = ""
-            
-            if mode == "x":
-                rumus_x = f"x' = x = {x}"
-                rumus_y = f"y' = -y = -({y}) = {yr}"
-            elif mode == "y":
-                rumus_x = f"x' = -x = -({x}) = {xr}"
-                rumus_y = f"y' = y = {y}"
-            elif mode == "origin":
-                rumus_x = f"x' = -x = -({x}) = {xr}"
-                rumus_y = f"y' = -y = -({y}) = {yr}"
-            elif mode == "yx":
-                rumus_x = f"x' = y = {y}"
-                rumus_y = f"y' = x = {x}"
-            elif mode == "y-x":
-                rumus_x = f"x' = -y = -({y}) = {xr}"
-                rumus_y = f"y' = -x = -({x}) = {yr}"
-            else:
-                rumus_x = f"x' = {x}"
-                rumus_y = f"y' = {y}"
 
             text += f"""
 Titik ({x},{y})
 
-Mode refleksi: {mode}
-
-Rumus:
-{rumus_x}
-{rumus_y}
+Mode refleksi:
+{mode}
 
 Hasil:
 ({x},{y}) -> ({xr},{yr})
@@ -672,4 +706,3 @@ Hasil:
 """
 
         return text
-

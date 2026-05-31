@@ -1,4 +1,3 @@
-
 from tkinter import *
 from core.helpers import *
 from core.transformations import *
@@ -34,8 +33,75 @@ class CanvasView(Frame):
         self.reflection_mode = None
         self.custom_reflection_line = None
 
-        self.canvas.bind("<Button-1>", self.start_pan)
+        self.drawing_mode = None
+        self.pixel_buffer = {}
+
+        self.canvas.bind("<Button-1>", self.on_canvas_click)
         self.canvas.bind("<B1-Motion>", self.pan_canvas)
+
+    def setPixel(self, px, py, color):
+        """Membuat 1 titik (pixel) di layar"""
+        self.canvas.create_rectangle(px, py, px+2, py+2, fill=color, outline=color)
+        self.pixel_buffer[(px, py)] = color
+
+    def getPixel(self, px, py):
+        """Membaca warna dari pixel"""
+        return self.pixel_buffer.get((px, py), None)
+
+    def draw_line_bresenham(self, x1, y1, x2, y2, color):
+        """Membuat garis pixel-demi-pixel menggunakan algoritma Bresenham"""
+        x1, y1 = int(x1), int(y1)
+        x2, y2 = int(x2), int(y2)
+        
+        dx = abs(x2 - x1)
+        dy = abs(y2 - y1)
+        
+        sx = 1 if x1 < x2 else -1
+        sy = 1 if y1 < y2 else -1
+        
+        err = dx - dy
+        
+        while True:
+            self.setPixel(x1, y1, color)
+            
+            if x1 == x2 and y1 == y2:
+                break
+                
+            e2 = 2 * err
+            if e2 > -dy:
+                err -= dy
+                x1 += sx
+            if e2 < dx:
+                err += dx
+                y1 += sy
+
+    def on_canvas_click(self, event):
+        """Menangani klik kursor berdasarkan mode (Titik/Garis/Pan)"""
+        
+        if self.drawing_mode in ["point", "line"]:
+            ox = 1200 // 2 + self.camera_x
+            oy = 850 // 2 + self.camera_y
+            
+            # Konversi kursor layar kembali ke koordinat kartesius grid
+            x_kartesius = (event.x - ox) / GRID_SIZE
+            y_kartesius = (oy - event.y) / GRID_SIZE
+
+            if self.drawing_mode == "point":
+                self.points = [(x_kartesius, y_kartesius)]
+            
+            elif self.drawing_mode == "line":
+                if len(self.points) >= 2:
+                    self.points = []
+                self.points.append((x_kartesius, y_kartesius))
+                
+            self.original_points = self.points[:]
+            self.draw()
+            
+            if hasattr(self, 'on_formula_update') and callable(self.on_formula_update):
+                self.on_formula_update(self.drawing_mode, self.points)
+            
+        else:
+            self.start_pan(event)
 
     def set_colors(self, fill_color, outline_color):
         self.fill_color = fill_color
@@ -226,6 +292,7 @@ class CanvasView(Frame):
     def draw(self):
 
         self.canvas.delete("all")
+        self.pixel_buffer.clear()
 
         self.draw_grid_custom()
         self.draw_axis_custom()
@@ -286,13 +353,23 @@ class CanvasView(Frame):
         screen_pts = [(pts[i], pts[i+1]) for i in range(0, len(pts), 2)]
         scanline_fill(self.canvas, screen_pts, self.fill_color)
 
-        # Outline saja (tanpa fill bawaan)
-        self.canvas.create_polygon(
-            pts,
-            fill="",
-            outline=self.outline_color,
-            width=2
-        )
+        n_points = len(self.points)
+        if n_points == 2:
+            x1, y1 = self.points[0]
+            x2, y2 = self.points[1]
+            px1, py1 = self.convert(x1, y1)
+            px2, py2 = self.convert(x2, y2)
+            self.draw_line_bresenham(px1, py1, px2, py2, self.outline_color)
+            
+        elif n_points > 2:
+            for i in range(n_points):
+                x1, y1 = self.points[i]
+                x2, y2 = self.points[(i + 1) % n_points]
+                
+                px1, py1 = self.convert(x1, y1)
+                px2, py2 = self.convert(x2, y2)
+                
+                self.draw_line_bresenham(px1, py1, px2, py2, self.outline_color)
 
         if self.reflection_mode is not None:
 
@@ -370,4 +447,6 @@ class CanvasView(Frame):
         self.original_points = []
         self.previous_points = []
         self.reflection_mode = None
+        self.drawing_mode = None
         self.canvas.delete("all")
+        self.pixel_buffer.clear()
