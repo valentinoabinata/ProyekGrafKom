@@ -2,6 +2,7 @@
 from tkinter import *
 from core.helpers import *
 from core.transformations import *
+from core.scanline_fill import scanline_fill
 
 class CanvasView(Frame):
 
@@ -281,9 +282,14 @@ class CanvasView(Frame):
                 text=f"({round(x,2)}, {round(y,2)})"
             )
 
+        # Scan Line Fill
+        screen_pts = [(pts[i], pts[i+1]) for i in range(0, len(pts), 2)]
+        scanline_fill(self.canvas, screen_pts, self.fill_color)
+
+        # Outline saja (tanpa fill bawaan)
         self.canvas.create_polygon(
             pts,
-            fill=self.fill_color,
+            fill="",
             outline=self.outline_color,
             width=2
         )

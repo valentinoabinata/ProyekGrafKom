@@ -280,6 +280,34 @@ Titik-titik yang dihasilkan:
         if color:
             self.canvas.set_colors(color, self.canvas.outline_color)
 
+            rumus = f"""SCAN LINE FILL
+
+Warna fill: {color}
+
+Algoritma:
+  1. Bangun Edge Table (ET) dari semua
+     sisi polygon (abaikan sisi horizontal)
+
+  2. Untuk setiap edge, simpan:
+     - y_min, y_max
+     - x pada y_min
+     - inverse slope (dx/dy = 1/m)
+
+  3. Scan dari y_min ke y_max:
+     Untuk setiap scan line y:
+       a. Cari intersection x dengan
+          setiap edge yang aktif
+          (y_min ≤ y < y_max)
+       b. x = x_start + (y - y_min) × (1/m)
+       c. Urutkan intersection
+       d. Gambar garis antara pasangan
+          intersection (fill antar x)
+
+Rumus intersection:
+  x_intersect = x₀ + (y - y_min) × (Δx/Δy)
+"""
+            self.formula.update_formula(rumus)
+
     def choose_outline(self):
         color = askcolor()[1]
 
